@@ -5,10 +5,9 @@ from config import Config
 
 app = Flask(__name__)
 app.config.from_object(Config)
-
 db = SQLAlchemy(app)
 
-# 📞 3 संपर्क व्यक्ती (Render Environment Variables मधून येतील)
+# 📞 3 संपर्क व्यक्ती
 CONTACTS = [
     {"name": "Rupesh", "phone": "+919167870303"},
     {"name": "Shivali", "phone": "+919082462036"},
@@ -19,7 +18,7 @@ VILLA_INFO = {
     "name": "Springfield Villa",
     "tagline": "अलिबागच्या समुद्रकाठची तुमची स्वतःची शांत निवारा 🌊",
     "hero_image": "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=1200&q=80",
-    "price_per_night": 3000,
+    "price_per_night": 5000,
     "bedrooms": 3,
     "bathrooms": 3,
     "max_guests": 8,
@@ -27,7 +26,6 @@ VILLA_INFO = {
     "contacts": CONTACTS
 }
 
-# Simple Booking Database Model
 class BookingEnquiry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
@@ -55,10 +53,8 @@ def booking():
         db.session.commit()
         flash('तुमची विनंती यशस्वीरित्या नोंदवली गेली आहे! आम्ही लवकरच संपर्क करू.', 'success')
         return redirect(url_for('index'))
-    
     return render_template('booking.html', villa=VILLA_INFO)
 
-# डेटाबेस टेबल ऑटोमॅटिक तयार करण्यासाठी
 with app.app_context():
     db.create_all()
 
