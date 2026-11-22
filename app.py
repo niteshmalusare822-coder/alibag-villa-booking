@@ -1,31 +1,60 @@
 import os
-from flask import Flask
+from flask import Flask, render_template, request, flash, redirect, url_for
+from flask_sqlalchemy import SQLAlchemy
 from config import Config
-from models import db
-from routes.website import website_bp
-from routes.booking import booking_bp
-from routes.payment import payment_bp
-from routes.admin import admin_bp
-from routes.gallery import gallery_bp
 
-def create_app():
-    app = Flask(__name__)
-    app.config.from_object(Config)
-    
-    db.init_app(app)
-    
-    app.register_blueprint(website_bp)
-    app.register_blueprint(booking_bp, url_prefix="/booking")
-    app.register_blueprint(payment_bp, url_prefix="/payment")
-    app.register_blueprint(admin_bp, url_prefix="/admin")
-    app.register_blueprint(gallery_bp, url_prefix="/gallery")
-    
-    with app.app_context():
-        db.create_all()
-        
-    return app
+app = Flask(__name__)
+app.config.from_object(Config)
 
-app = create_app()
+db = SQLAlchemy(app)
+
+# Structure 1: फक्त एकाच व्हिलाची माहिती (Springfield Villa)
+VILLA_INFO = {
+    "name": "Springfield Villa",
+    "tagline": "अलिबागच्या समुद्रकाठची तुमची स्वतःची शांत निवारा 🌊",
+    "hero_image": "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=1200&q=80",
+    "price_per_night": 5000,
+    "bedrooms": 3,
+    "bathrooms": 3,
+    "max_guests": 8,
+    "amenities": ["Private Pool", "Sea View", "Free Wi-Fi", "Fully Equipped Kitchen", "AC Rooms", "Free Parking"],
+    "whatsapp": os.getenv('WHATSAPP_NUMBER', '919876543210')
+}
+
+# Simple Booking Model for Structure 1
+class BookingEnquiry(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    phone = db.Column(db.String(20), nullable=False)
+    check_in = db.Column(db.String(20), nullable=False)
+    check_out = db.Column(db.String(20), nullable=False)
+    guests = db.Column(db.Integer, nullable=False)
+    status = db.Column(db.String(20), default='Pending')
+
+@app.route('/')
+def index():
+    return render_template('index.html', villa=VILLA_INFO)
+
+@app.route('/booking', methods=['GET', 'POST'])
+def booking():
+    if request.method == 'POST':
+        new_enquiry = BookingEnquiry(
+            name=request.form['name'],
+            phone=request.form['phone'],
+            check_in=request.form['check_in'],
+            check_out=request.form['check_out'],
+            guests=request.form['guests']
+        )
+        db.session.add(new_enquiry)
+        db.session.commit()
+        flash('तुमची विनंती यशस्वीरित्या नोंदवली गेली आहे! आम्ही लवकरच संपर्क करू.', 'success')
+        return redirect(url_for('index'))
+    
+    return render_template('booking.html', villa=VILLA_INFO)
+
+# डेटाबेस टेबल तयार करण्यासाठी
+with app.app_context():
+    db.create_all()
 
 if __name__ == "__main__":
     app.run(debug=True)
