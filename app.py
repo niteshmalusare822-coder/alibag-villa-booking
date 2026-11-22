@@ -8,20 +8,26 @@ app.config.from_object(Config)
 
 db = SQLAlchemy(app)
 
-# Structure 1: फक्त एकाच व्हिलाची माहिती (Springfield Villa)
+# 📞 3 संपर्क व्यक्ती (Render Environment Variables मधून येतील)
+CONTACTS = [
+    {"name": "Rupesh", "phone": "+919167870303"},
+    {"name": "Shivali", "phone": "+919082462036"},
+    {"name": "Savli", "phone": "+918454037731"}
+]
+
 VILLA_INFO = {
     "name": "Springfield Villa",
     "tagline": "अलिबागच्या समुद्रकाठची तुमची स्वतःची शांत निवारा 🌊",
     "hero_image": "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=1200&q=80",
-    "price_per_night": 5000,
+    "price_per_night": 3000,
     "bedrooms": 3,
     "bathrooms": 3,
     "max_guests": 8,
     "amenities": ["Private Pool", "Sea View", "Free Wi-Fi", "Fully Equipped Kitchen", "AC Rooms", "Free Parking"],
-    "whatsapp": os.getenv('WHATSAPP_NUMBER', '919876543210')
+    "contacts": CONTACTS
 }
 
-# Simple Booking Model for Structure 1
+# Simple Booking Database Model
 class BookingEnquiry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
@@ -52,7 +58,7 @@ def booking():
     
     return render_template('booking.html', villa=VILLA_INFO)
 
-# डेटाबेस टेबल तयार करण्यासाठी
+# डेटाबेस टेबल ऑटोमॅटिक तयार करण्यासाठी
 with app.app_context():
     db.create_all()
 
