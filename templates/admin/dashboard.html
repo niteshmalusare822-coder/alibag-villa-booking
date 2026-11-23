@@ -2,16 +2,40 @@
 <html lang="mr">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard | Bookings</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #f4f7f6; padding: 20px; }
-        .header { display: flex; justify-content: space-between; align-items: center; background: #006400; color: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: #f4f7f6; padding: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; background: #006400; color: white; padding: 15px 25px; border-radius: 8px; margin-bottom: 20px; }
         .btn-logout { background: #cc0000; color: white; padding: 8px 15px; text-decoration: none; border-radius: 5px; }
-        table { width: 100%; border-collapse: collapse; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        .policy-box { background: #e8f5e9; border-left: 4px solid #006400; padding: 15px 20px; border-radius: 5px; margin-bottom: 20px; }
+        .policy-box h3 { color: #006400; margin-bottom: 10px; }
+        .policy-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
+        .policy-item { background: white; padding: 10px; border-radius: 5px; text-align: center; }
+        .policy-item strong { color: #006400; display: block; font-size: 1.2rem; }
+        .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
+        .stat-card { background: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.08); }
+        .stat-card .num { font-size: 2rem; font-weight: bold; color: #006400; }
+        .stat-card.booked .num { color: #cc0000; }
+        .stat-card .lbl { color: #666; font-size: 0.9rem; }
+        .section { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.08); margin-bottom: 20px; }
+        .section h2 { color: #006400; margin-bottom: 15px; border-bottom: 2px solid #006400; padding-bottom: 8px; }
+        .calendar { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 8px; }
+        .cal-day { padding: 10px 5px; text-align: center; border-radius: 5px; font-size: 0.85rem; font-weight: bold; }
+        .cal-day.free { background: #d4edda; color: #155724; }
+        .cal-day.booked { background: #f8d7da; color: #721c24; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; font-size: 0.95rem; }
         th { background: #006400; color: white; }
-        .status-pending { color: orange; font-weight: bold; }
-        .status-confirmed { color: green; font-weight: bold; }
+        .status-Pending { color: orange; font-weight: bold; }
+        .status-Confirmed { color: green; font-weight: bold; }
+        .status-Cancelled { color: red; font-weight: bold; text-decoration: line-through; }
+        .btn-sm { padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem; margin: 2px; }
+        .btn-confirm { background: #006400; color: white; }
+        .btn-cancel { background: #cc0000; color: white; }
+        .flash { background: #d4edda; color: #155724; padding: 12px; text-align: center; border-radius: 5px; margin-bottom: 15px; }
+        .empty { text-align: center; color: #666; padding: 30px; }
     </style>
 </head>
 <body>
@@ -20,35 +44,85 @@
         <a href="/admin/logout" class="btn-logout">Logout</a>
     </div>
 
-    {% if bookings %}
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Guest Name</th>
-                <th>Phone</th>
-                <th>Check-In</th>
-                <th>Check-Out</th>
-                <th>Guests</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for b in bookings %}
-            <tr>
-                <td>#{{ b.id }}</td>
-                <td>{{ b.name }}</td>
-                <td>{{ b.phone }}</td>
-                <td>{{ b.check_in }}</td>
-                <td>{{ b.check_out }}</td>
-                <td>{{ b.guests }}</td>
-                <td class="status-{{ b.status|lower }}">{{ b.status }}</td>
-            </tr>
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}{% for m in messages %}<div class="flash">{{ m }}</div>{% endfor %}{% endif %}
+    {% endwith %}
+
+    <!-- 🏡 Villa Policy (Timing + Rooms) -->
+    <div class="policy-box">
+        <h3>🏡 Villa Policy & Rooms</h3>
+        <div class="policy-grid">
+            <div class="policy-item"><strong>{{ villa.bedrooms }}</strong>Bedrooms</div>
+            <div class="policy-item"><strong>{{ villa.bathrooms }}</strong>Bathrooms</div>
+            <div class="policy-item"><strong>{{ villa.max_guests }}</strong>Max Guests</div>
+            <div class="policy-item"><strong>{{ villa.check_in_time }}</strong>Check-In</div>
+            <div class="policy-item"><strong>{{ villa.check_out_time }}</strong>Check-Out</div>
+            <div class="policy-item"><strong>₹{{ villa.price_per_night }}</strong>Per Night</div>
+        </div>
+    </div>
+
+    <!-- 📈 Stats -->
+    <div class="stats">
+        <div class="stat-card"><div class="num">{{ bookings|length }}</div><div class="lbl">Total Requests</div></div>
+        <div class="stat-card booked"><div class="num">{{ total_booked }}</div><div class="lbl">Booked Days</div></div>
+        <div class="stat-card"><div class="num">{{ available_days }}</div><div class="lbl">Available (30d)</div></div>
+    </div>
+
+    <!-- 📅 Availability Calendar -->
+    <div class="section">
+        <h2>📅 Next 30 Days Availability</h2>
+        <div class="calendar">
+            {% for c in calendar %}
+            <div class="cal-day {{ 'booked' if c.booked else 'free' }}">{{ c.label }}</div>
             {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-        <p style="text-align: center; color: #666;">अजून कोणतीही Booking आलेली नाही.</p>
-    {% endif %}
+        </div>
+        <p style="margin-top:10px; color:#666;">🟢 Green = Available | 🔴 Red = Booked</p>
+    </div>
+
+    <!-- 📋 Bookings Table -->
+    <div class="section">
+        <h2>📋 All Booking Requests</h2>
+        {% if bookings %}
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th><th>Guest Name</th><th>Phone</th>
+                    <th>Check-In</th><th>Check-Out</th>
+                    <th>Nights</th><th>Guests</th><th>Total (₹)</th>
+                    <th>Status</th><th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for b in bookings %}
+                <tr>
+                    <td>#{{ b.id }}</td>
+                    <td>{{ b.name if b.name else '— (not filled)' }}</td>
+                    <td>{{ b.phone }}</td>
+                    <td>{{ b.check_in }}</td>
+                    <td>{{ b.check_out }}</td>
+                    <td>
+                        {% set nights = 0 %}
+                        {% try %}{% endtry %}
+                        {{ b.check_in }} → {{ b.check_out }}
+                    </td>
+                    <td>{{ b.guests }}</td>
+                    <td>₹{{ (b.guests * 0) + 5000 }}</td>
+                    <td class="status-{{ b.status }}">{{ b.status }}</td>
+                    <td>
+                        <form method="POST" action="/admin/booking/{{ b.id }}/status" style="display:inline;">
+                            <button class="btn-sm btn-confirm" name="status" value="Confirmed">✓ Confirm</button>
+                        </form>
+                        <form method="POST" action="/admin/booking/{{ b.id }}/status" style="display:inline;">
+                            <button class="btn-sm btn-cancel" name="status" value="Cancelled">✗ Cancel</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="empty">अजून कोणतीही Booking आलेली नाही.</p>
+        {% endif %}
+    </div>
 </body>
 </html>
