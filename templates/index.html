@@ -1,94 +1,157 @@
 <!DOCTYPE html>
 <html lang="mr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ villa.name }} | Alibaug</title>
-    <style>
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; background: #f9f9f9; color: #333; }
-        header { background: #006400; color: white; padding: 20px; text-align: center; }
-        .hero { background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('{{ villa.hero_image }}') center/cover; height: 50vh; display: flex; align-items: center; justify-content: center; text-align: center; color: white; }
-        .hero h1 { font-size: 3rem; margin: 0; text-shadow: 2px 2px 4px #000; }
-        .container { max-width: 1000px; margin: 30px auto; padding: 0 20px; }
-        .section { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 25px; }
-        .section h2 { color: #006400; border-bottom: 2px solid #006400; padding-bottom: 10px; margin-top: 0; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
-        .card { background: #f0f8f0; padding: 15px; border-radius: 8px; text-align: center; }
-        .card h3 { margin: 0 0 5px 0; color: #006400; }
-        .card p { margin: 0; font-size: 0.9rem; }
-        .contact-grid { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
-        .contact-card { background: #fff; border: 2px solid #006400; padding: 20px; border-radius: 10px; text-align: center; min-width: 200px; }
-        .btn { background: #25D366; color: white; padding: 10px 20px; text-decoration: none; border-radius: 25px; font-weight: bold; display: inline-block; margin-top: 10px; }
-        .btn-book { background: #006400; font-size: 1.2rem; padding: 15px 30px; }
-        .flash { background: #d4edda; color: #155724; padding: 15px; text-align: center; border-radius: 5px; margin: 20px auto; max-width: 600px; }
-        footer { text-align: center; padding: 20px; background: #006400; color: white; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ villa.name }} | Alibaug</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif}
+body{background:#f5f7fa;color:#222}
+.topbar{background:#006400;color:white;padding:15px 30px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100}
+.topbar a{color:white;text-decoration:none;margin-left:20px}
+.hero{background:linear-gradient(rgba(0,0,0,.5),rgba(0,0,0,.5)),url('{{ villa.hero_image }}') center/cover;height:55vh;display:flex;align-items:center;justify-content:center;text-align:center;color:white}
+.hero h1{font-size:3rem;text-shadow:2px 2px 6px #000}
+.hero p{font-size:1.3rem;margin-top:10px}
+.search-box{max-width:900px;margin:-50px auto 30px;background:white;padding:25px;border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,.15);display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:15px;align-items:end;position:relative;z-index:5}
+.search-box label{display:block;font-size:.85rem;color:#666;margin-bottom:5px}
+.search-box input{width:100%;padding:12px;border:1px solid #ddd;border-radius:6px;font-size:1rem}
+.btn-search{background:#006400;color:white;border:none;padding:14px 30px;border-radius:6px;font-size:1rem;font-weight:bold;cursor:pointer}
+.btn-search:hover{background:#004d00}
+.container{max-width:1200px;margin:0 auto;padding:20px}
+.section{background:white;padding:25px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:25px}
+.section h2{color:#006400;border-bottom:2px solid #006400;padding-bottom:10px;margin-bottom:20px}
+.rooms-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:15px}
+.room-card{background:#f0f8f0;border:2px solid #006400;border-radius:10px;padding:20px;text-align:center}
+.room-card .num{font-size:2rem;color:#006400;font-weight:bold}
+.room-card .cap{color:#666;font-size:.9rem}
+.meal-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px}
+.meal-item{background:#fff8e1;border-left:4px solid #ff9800;padding:15px;border-radius:6px}
+.meal-item .icon{font-size:1.5rem}
+.meal-item .time{color:#ff9800;font-weight:bold;font-size:.85rem}
+.meal-item .name{font-size:1rem;margin-top:5px}
+.cal-strip{display:flex;gap:8px;overflow-x:auto;padding:10px 0}
+.cal-day{min-width:70px;padding:10px 5px;text-align:center;border-radius:8px;font-size:.85rem;font-weight:bold}
+.cal-day.free{background:#d4edda;color:#155724;border:1px solid #28a745}
+.cal-day.tight{background:#fff3cd;color:#856404;border:1px solid #ffc107}
+.cal-day.full{background:#f8d7da;color:#721c24;border:1px solid #dc3545}
+.price-box{background:#006400;color:white;padding:25px;border-radius:12px;text-align:center;margin-bottom:25px}
+.price-box .big{font-size:2.5rem;font-weight:bold}
+.price-box .note{font-size:.9rem;opacity:.9;margin-top:5px}
+.nearby-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.nearby-card{background:#f0f8f0;padding:15px;border-radius:8px;text-align:center}
+.nearby-card h4{color:#006400;margin-bottom:5px}
+.contacts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px}
+.contact-card{border:2px solid #006400;padding:20px;border-radius:10px;text-align:center}
+.btn-wa{background:#25D366;color:white;padding:8px 16px;border-radius:20px;text-decoration:none;display:inline-block;margin-top:8px}
+.flash{background:#d4edda;color:#155724;padding:15px;text-align:center;border-radius:8px;margin:15px auto;max-width:800px}
+footer{background:#006400;color:white;text-align:center;padding:20px;margin-top:30px}
+@media(max-width:768px){.search-box{grid-template-columns:1fr}.hero h1{font-size:2rem}}
+</style>
 </head>
 <body>
-    <header><h1>🏡 {{ villa.name }}</h1></header>
+<div class="topbar">
+  <h2>🏡 {{ villa.name }}</h2>
+  <nav><a href="/">Home</a><a href="/booking">Book Now</a><a href="/admin/login">Admin</a></nav>
+</div>
 
-    {% with messages = get_flashed_messages() %}
-      {% if messages %}{% for message in messages %}<div class="flash">{{ message }}</div>{% endfor %}{% endif %}
-    {% endwith %}
+{% with messages = get_flashed_messages() %}
+{% if messages %}{% for m in messages %}<div class="flash">{{ m }}</div>{% endfor %}{% endif %}
+{% endwith %}
 
-    <section class="hero">
-        <div>
-            <h1>{{ villa.name }}</h1>
-            <p style="font-size: 1.3rem;">{{ villa.tagline }}</p>
-            <!-- ✅ येथे 'booking' हे अचूक endpoint नाव आहे -->
-            <a href="{{ url_for('booking') }}" class="btn btn-book">🗓️ Book Now</a>
-        </div>
-    </section>
+<section class="hero">
+  <div><h1>{{ villa.name }}</h1><p>{{ villa.tagline }}</p></div>
+</section>
 
-    <div class="container">
-        <!-- Highlights -->
-        <div class="section">
-            <h2>✨ Villa Highlights</h2>
-            <div class="grid">
-                {% for h in villa.highlights %}
-                <div class="card"><h3>✅ {{ h }}</h3></div>
-                {% endfor %}
-            </div>
-        </div>
+<div class="search-box">
+  <div><label>Check-in</label><input type="date" id="ci" min="{{ 'today' }}"></div>
+  <div><label>Check-out</label><input type="date" id="co"></div>
+  <div><label>Guests</label><input type="number" id="g" min="1" max="48" value="2"></div>
+  <a href="/booking" class="btn-search">🔍 Check Availability</a>
+</div>
 
-        <!-- Nearby Places -->
-        <div class="section">
-            <h2>📍 Nearby Locations</h2>
-            <div class="grid">
-                {% for n in villa.nearby %}
-                <div class="card">
-                    <h3>{{ n.place }}</h3>
-                    <p><strong>{{ n.dist }}</strong> ({{ n.time }})</p>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
+<div class="container">
 
-        <!-- How to Reach -->
-        <div class="section">
-            <h2>🚗 How to Reach (Mumbai to Villa)</h2>
-            <p><strong>Route:</strong> {{ villa.route.path }}</p>
-            <p><strong>Total Distance:</strong> {{ villa.route.distance }} | <strong>Time:</strong> {{ villa.route.time }}</p>
-            <p><strong>Address:</strong> {{ villa.address }}</p>
-        </div>
+  <!-- 💰 Price -->
+  <div class="price-box">
+    <div class="big">₹{{ villa.price_per_person }} / person / day</div>
+    <div class="note">✅ All meals included (24 hours) | Check-in: {{ villa.check_in_time }} | Check-out: {{ villa.check_out_time }}</div>
+  </div>
 
-        <!-- Contacts -->
-        <div class="section">
-            <h2>📞 Contact Us</h2>
-            <div class="contact-grid">
-                {% for c in villa.contacts %}
-                <div class="contact-card">
-                    <h3>{{ c.name }}</h3>
-                    <p>{{ c.phone }}</p>
-                    <a href="https://wa.me/{{ c.phone.replace('+','') }}" class="btn" target="_blank">💬 WhatsApp</a>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
+  <!-- 🛏️ Rooms -->
+  <div class="section">
+    <h2>🛏️ Rooms Available (Total: {{ villa.total_rooms }})</h2>
+    <div class="rooms-grid">
+      {% for i in range(villa.total_rooms) %}
+      <div class="room-card">
+        <div class="num">Room {{ i+1 }}</div>
+        <div class="cap">👥 {{ villa.room_capacity }} persons</div>
+      </div>
+      {% endfor %}
     </div>
+    <p style="margin-top:15px;color:#666;">💡 Total capacity: <strong>{{ villa.total_rooms * villa.room_capacity }} persons</strong> at a time</p>
+  </div>
 
-    <footer>
-        <p>© 2026 {{ villa.name }} | Unwind • Relax • Make Memories</p>
-    </footer>
+  <!-- 🍽️ Meal Plan -->
+  <div class="section">
+    <h2>🍽️ 24-Hour Meal Plan (Included in Price)</h2>
+    <div class="meal-list">
+      {% for m in villa.meal_plan %}
+      <div class="meal-item">
+        <div class="icon">{{ m.icon }}</div>
+        <div class="time">{{ m.time }}</div>
+        <div class="name">{{ m.meal }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- 📅 14-Day Availability -->
+  <div class="section">
+    <h2>📅 Next 14 Days Availability</h2>
+    <div class="cal-strip">
+      {% for p in preview %}
+      <div class="cal-day {{ 'free' if p.available == villa.total_rooms else ('tight' if p.available > 0 else 'full') }}">
+        <div>{{ p.label }}</div>
+        <div style="font-size:.75rem;">{{ p.available }} free</div>
+      </div>
+      {% endfor %}
+    </div>
+    <p style="margin-top:10px;color:#666;font-size:.85rem;">🟢 All free | 🟡 Partial | 🔴 Full</p>
+  </div>
+
+  <!-- 📍 Nearby -->
+  <div class="section">
+    <h2>📍 Nearby Locations</h2>
+    <div class="nearby-grid">
+      {% for n in villa.nearby %}
+      <div class="nearby-card"><h4>{{ n.place }}</h4><p><strong>{{ n.dist }}</strong></p><p style="color:#666;font-size:.85rem;">{{ n.time }}</p></div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- 🚗 Route -->
+  <div class="section">
+    <h2>🚗 How to Reach</h2>
+    <p><strong>Route:</strong> {{ villa.route.path }}</p>
+    <p><strong>Distance:</strong> {{ villa.route.distance }} | <strong>Time:</strong> {{ villa.route.time }}</p>
+    <p><strong>Address:</strong> {{ villa.address }}</p>
+  </div>
+
+  <!-- 📞 Contacts -->
+  <div class="section">
+    <h2>📞 Contact Us</h2>
+    <div class="contacts-grid">
+      {% for c in villa.contacts %}
+      <div class="contact-card">
+        <h3>{{ c.name }}</h3>
+        <p>{{ c.phone }}</p>
+        <a href="https://wa.me/{{ c.phone.replace('+','') }}" class="btn-wa" target="_blank">💬 WhatsApp</a>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+<footer><p>© 2026 {{ villa.name }} | Unwind • Relax • Make Memories</p></footer>
 </body>
 </html>
