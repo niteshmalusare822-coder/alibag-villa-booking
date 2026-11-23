@@ -59,6 +59,38 @@ def booking():
 
 with app.app_context():
     db.create_all()
+# === SIMPLE ADMIN PANEL ROUTES ===
+from functools import wraps
+from flask import session
+
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('admin_logged_in'):
+            return redirect(url_for('admin_login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+@app.route('/admin/login', methods=['GET', 'POST'])
+def admin_login():
+    if request.method == 'POST':
+        if request.form['username'] == app.config['ADMIN_USERNAME'] and request.form['password'] == app.config['ADMIN_PASSWORD']:
+            session['admin_logged_in'] = True
+            return redirect(url_for('admin_dashboard'))
+        flash('चुकीचे Username किंवा Password!', 'error')
+    return render_template('admin_login.html')
+
+@app.route('/admin/logout')
+def admin_logout():
+    session.pop('admin_logged_in', None)
+    return redirect(url_for('admin_login'))
+
+@app.route('/admin/dashboard')
+@admin_required
+def admin_dashboard():
+    # डेटाबेसमधील सर्व bookings उतरत्या क्रमाने (नवीन आधी) दाखवते
+    bookings = BookingEnquiry.query.order_by(BookingEnquiry.id.desc()).all()
+    return render_template('admin_dashboard.html', bookings=bookings)
 
 if __name__ == "__main__":
     app.run(debug=True)
