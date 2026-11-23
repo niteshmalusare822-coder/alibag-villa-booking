@@ -1,4 +1,5 @@
 import os
+from datetime import date, timedelta
 from flask import Flask, render_template, request, flash, redirect, url_for, session
 from flask_sqlalchemy import SQLAlchemy
 from config import Config
@@ -6,13 +7,9 @@ from functools import wraps
 
 app = Flask(__name__)
 app.config.from_object(Config)
-
-# ✅ Bad Request एरर येऊ नये म्हणून CSRF बंद केले
-app.config['WTF_CSRF_ENABLED'] = False 
-
+app.config['WTF_CSRF_ENABLED'] = False
 db = SQLAlchemy(app)
 
-# ================= GUEST SECTION =================
 CONTACTS = [
     {"name": "Rupesh", "phone": "+919167870303"},
     {"name": "Shivali", "phone": "+919082462036"},
@@ -24,6 +21,12 @@ VILLA_INFO = {
     "tagline": "Escape the City... Feel the Vacation Vibes!",
     "address": "Gut No. 214, Plot No. 854, Chondhi, Alibaug, Maharashtra 402208",
     "hero_image": "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&q=80",
+    "price_per_night": 5000,
+    "bedrooms": 3,
+    "bathrooms": 3,
+    "max_guests": 8,
+    "check_in_time": "12:00 PM",
+    "check_out_time": "11:00 AM",
     "highlights": ["Spacious & Beautiful Villa", "Private Swimming Pool", "Lush Green Lawn", "Relaxing Sit-out Area", "Perfect for Family & Friends", "Peaceful & Serene Location"],
     "nearby": [
         {"place": "Mandwa Jetty", "dist": "12 km", "time": "25-30 Min"},
@@ -64,15 +67,15 @@ def booking():
             )
             db.session.add(new_enquiry)
             db.session.commit()
-            flash('तुमची बुकिंग विनंती यशस्वीरित्या नोंदवली गेली आहे!', 'success')
+            flash('तुमची बुकिंग विनंती नोंदवली गेली आहे! आम्ही लवकरच संपर्क करू.', 'success')
             return redirect(url_for('index'))
         except Exception as e:
             db.session.rollback()
-            flash('बुकिंग नोंदवताना त्रुटी आली. कृपया सर्व फील्ड्स भरा.', 'error')
+            flash('त्रुटी आली. कृपया सर्व फील्ड्स भरा.', 'error')
             return redirect(url_for('booking'))
     return render_template('booking.html', villa=VILLA_INFO)
 
-# ================= ADMIN SECTION =================
+# ===== ADMIN SECTION =====
 def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -99,7 +102,51 @@ def admin_logout():
 @admin_required
 def admin_dashboard():
     bookings = BookingEnquiry.query.order_by(BookingEnquiry.id.desc()).all()
-    return render_template('admin/dashboard.html', bookings=bookings)
+
+    # 📅 Availability Calendar (पुढील 30 दिवस)
+    booked_dates = set()
+    for b in bookings:
+        if b.status != 'Cancelled':
+            try:
+                ci = date.fromisoformat(b.check_in)
+                co = date.fromisoformat(b.check_out)
+                d = ci
+                while d < co:
+                    booked_dates.add(d.isoformat())
+                    d += timedelta(days=1)
+            except Exception:
+                pass
+
+    today = date.today()
+    calendar = []
+    for i in range(30):
+        d = today + timedelta(days=i)
+        calendar.append({
+            "date": d.isoformat(),
+            "label": d.strftime("%d %b"),
+            "booked": d.isoformat() in booked_dates
+        })
+
+    total_booked = len(booked_dates)
+    available_days = 30 - total_booked
+
+    return render_template('admin/dashboard.html',
+                           bookings=bookings,
+                           calendar=calendar,
+                           villa=VILLA_INFO,
+                           total_booked=total_booked,
+                           available_days=available_days)
+
+@app.route('/admin/booking/<int:bid>/status', methods=['POST'])
+@admin_required
+def update_status(bid):
+    booking = BookingEnquiry.query.get_or_404(bid)
+    new_status = request.form.get('status', 'Pending')
+    if new_status in ('Pending', 'Confirmed', 'Cancelled'):
+        booking.status = new_status
+        db.session.commit()
+        flash(f'Booking #{bid} status: {new_status}', 'success')
+    return redirect(url_for('admin_dashboard'))
 
 with app.app_context():
     db.create_all()
