@@ -6,9 +6,13 @@ from functools import wraps
 
 app = Flask(__name__)
 app.config.from_object(Config)
+
+# ✅ Bad Request एरर येऊ नये म्हणून CSRF बंद केले
+app.config['WTF_CSRF_ENABLED'] = False 
+
 db = SQLAlchemy(app)
 
-# ================= 1. GUEST SECTION =================
+# ================= GUEST SECTION =================
 CONTACTS = [
     {"name": "Rupesh", "phone": "+919167870303"},
     {"name": "Shivali", "phone": "+919082462036"},
@@ -36,6 +40,7 @@ class BookingEnquiry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     phone = db.Column(db.String(20), nullable=False)
+    email = db.Column(db.String(100), nullable=True)
     check_in = db.Column(db.String(20), nullable=False)
     check_out = db.Column(db.String(20), nullable=False)
     guests = db.Column(db.Integer, nullable=False)
@@ -48,18 +53,26 @@ def index():
 @app.route('/booking', methods=['GET', 'POST'])
 def booking():
     if request.method == 'POST':
-        new_enquiry = BookingEnquiry(
-            name=request.form['name'], phone=request.form['phone'],
-            check_in=request.form['check_in'], check_out=request.form['check_out'],
-            guests=request.form['guests']
-        )
-        db.session.add(new_enquiry)
-        db.session.commit()
-        flash('तुमची बुकिंग विनंती यशस्वीरित्या नोंदवली गेली आहे!', 'success')
-        return redirect(url_for('index'))
+        try:
+            new_enquiry = BookingEnquiry(
+                name=request.form.get('name', ''),
+                phone=request.form.get('phone', ''),
+                email=request.form.get('email', ''),
+                check_in=request.form.get('check_in', ''),
+                check_out=request.form.get('check_out', ''),
+                guests=int(request.form.get('guests', 1))
+            )
+            db.session.add(new_enquiry)
+            db.session.commit()
+            flash('तुमची बुकिंग विनंती यशस्वीरित्या नोंदवली गेली आहे!', 'success')
+            return redirect(url_for('index'))
+        except Exception as e:
+            db.session.rollback()
+            flash('बुकिंग नोंदवताना त्रुटी आली. कृपया सर्व फील्ड्स भरा.', 'error')
+            return redirect(url_for('booking'))
     return render_template('booking.html', villa=VILLA_INFO)
 
-# ================= 2. ADMIN SECTION =================
+# ================= ADMIN SECTION =================
 def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
