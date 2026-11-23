@@ -1,65 +1,100 @@
 <!DOCTYPE html>
 <html lang="mr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Book {{ villa.name }}</title>
-    <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; padding: 20px; }
-        .container { max-width: 600px; margin: 40px auto; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h1 { color: #006400; text-align: center; margin-bottom: 10px; }
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-weight: bold; color: #333; }
-        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem; box-sizing: border-box; }
-        input:focus { outline: none; border-color: #006400; }
-        .btn-submit { width: 100%; padding: 15px; background: #006400; color: white; border: none; border-radius: 5px; font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-top: 20px; }
-        .btn-submit:hover { background: #004d00; }
-        .flash { background: #d4edda; color: #155724; padding: 15px; text-align: center; border-radius: 5px; margin-bottom: 20px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Book {{ villa.name }}</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif}
+body{background:#f5f7fa;padding:20px}
+.container{max-width:900px;margin:0 auto}
+h1{color:#006400;text-align:center;margin-bottom:10px}
+.subtitle{text-align:center;color:#666;margin-bottom:25px}
+.card{background:white;padding:25px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.08);margin-bottom:20px}
+.card h2{color:#006400;margin-bottom:15px;border-bottom:2px solid #006400;padding-bottom:8px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:15px}
+label{display:block;margin-bottom:6px;font-weight:bold;color:#333}
+input,select{width:100%;padding:12px;border:1px solid #ddd;border-radius:6px;font-size:1rem}
+.btn{width:100%;padding:15px;background:#006400;color:white;border:none;border-radius:6px;font-size:1.1rem;font-weight:bold;cursor:pointer;margin-top:15px}
+.btn:hover{background:#004d00}
+.cal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px;margin-top:15px}
+.cal-day{padding:10px;text-align:center;border-radius:6px;font-size:.8rem;font-weight:bold}
+.cal-day.free{background:#d4edda;color:#155724}
+.cal-day.tight{background:#fff3cd;color:#856404}
+.cal-day.full{background:#f8d7da;color:#721c24}
+.price-preview{background:#e8f5e9;border-left:4px solid #006400;padding:15px;border-radius:6px;margin-top:15px;display:none}
+.price-preview.show{display:block}
+.price-preview .total{font-size:1.5rem;color:#006400;font-weight:bold}
+.meal-info{background:#fff8e1;border-left:4px solid #ff9800;padding:15px;border-radius:6px;margin-top:15px;font-size:.9rem}
+.flash{background:#d4edda;color:#155724;padding:15px;text-align:center;border-radius:6px;margin-bottom:15px}
+.back{display:block;text-align:center;margin-top:20px;color:#006400;text-decoration:none}
+@media(max-width:600px){.form-row{grid-template-columns:1fr}}
+</style>
 </head>
 <body>
-    <div class="container">
-        <h1>🗓️ Booking Request</h1>
-        <p style="text-align: center; color: #666; margin-bottom: 30px;">Submitting this form sends a request; it does not confirm a reservation.</p>
+<div class="container">
+<h1>🗓️ Book {{ villa.name }}</h1>
+<p class="subtitle">₹{{ villa.price_per_person }}/person/day • {{ villa.total_rooms }} rooms • {{ villa.room_capacity }} persons/room • Meals included</p>
 
-        {% with messages = get_flashed_messages() %}
-          {% if messages %}{% for message in messages %}<div class="flash">{{ message }}</div>{% endfor %}{% endif %}
-        {% endwith %}
+{% with messages = get_flashed_messages() %}
+{% if messages %}{% for m in messages %}<div class="flash">{{ m }}</div>{% endfor %}{% endif %}
+{% endwith %}
 
-        <!-- form action="/booking" आणि method="POST" अचूक असणे गरजेचे -->
-        <form method="POST" action="/booking">
-            <div class="form-group">
-                <label>Full name</label>
-                <input type="text" name="name" required>
-            </div>
+<div class="card">
+<h2>📅 30-Day Availability</h2>
+<div class="cal-grid">
+{% for c in calendar %}
+<div class="cal-day {{ c.status }}">
+  <div>{{ c.label }}</div>
+  <div style="font-size:.7rem;">{{ c.available }} free</div>
+</div>
+{% endfor %}
+</div>
+<p style="margin-top:10px;color:#666;font-size:.85rem;">🟢 Fully free | 🟡 Partial | 🔴 All rooms booked</p>
+</div>
 
-            <div class="form-group">
-                <label>Mobile number</label>
-                <input type="tel" name="phone" required>
-            </div>
+<div class="card">
+<h2>📝 Booking Form</h2>
+<form method="POST" action="/booking">
+  <div class="form-row">
+    <div><label>Full Name *</label><input type="text" name="name" required></div>
+    <div><label>Phone *</label><input type="tel" name="phone" required></div>
+  </div>
+  <div class="form-row">
+    <div><label>Email</label><input type="email" name="email"></div>
+    <div><label>Guests * (max {{ villa.total_rooms * villa.room_capacity }})</label><input type="number" name="guests" id="g" min="1" max="{{ villa.total_rooms * villa.room_capacity }}" value="2" required></div>
+  </div>
+  <div class="form-row">
+    <div><label>Check-in *</label><input type="date" name="check_in" id="ci" required></div>
+    <div><label>Check-out *</label><input type="date" name="check_out" id="co" required></div>
+  </div>
+  <div class="price-preview" id="pp">
+    <strong>💰 Price Estimate:</strong>
+    <div>Nights: <span id="n">0</span> | Guests: <span id="gg">0</span></div>
+    <div class="total">Total: ₹<span id="tt">0</span></div>
+    <div style="font-size:.85rem;color:#666;">(₹{{ villa.price_per_person }} × guests × nights, meals included)</div>
+  </div>
+  <div class="meal-info">
+    🍽️ <strong>Meals Included:</strong> Morning Tea+Nashta → Lunch → Evening Tea → Dinner → Check-out Nashta
+  </div>
+  <button type="submit" class="btn">✅ Confirm Booking</button>
+</form>
+<a href="/" class="back">← Back to Home</a>
+</div>
+</div>
 
-            <div class="form-group">
-                <label>Email</label>
-                <input type="email" name="email">
-            </div>
-
-            <div class="form-group">
-                <label>Check-in</label>
-                <input type="date" name="check_in" required>
-            </div>
-
-            <div class="form-group">
-                <label>Check-out</label>
-                <input type="date" name="check_out" required>
-            </div>
-
-            <div class="form-group">
-                <label>Guests</label>
-                <input type="number" name="guests" min="1" max="8" value="2" required>
-            </div>
-
-            <button type="submit" class="btn-submit">Submit Request</button>
-        </form>
-    </div>
+<script>
+const pp=document.getElementById('pp'),n=document.getElementById('n'),gg=document.getElementById('gg'),tt=document.getElementById('tt');
+const ci=document.getElementById('ci'),co=document.getElementById('co'),g=document.getElementById('g');
+function calc(){
+  if(!ci.value||!co.value||!g.value){pp.classList.remove('show');return;}
+  const nights=Math.floor((new Date(co.value)-new Date(ci.value))/(1000*60*60*24));
+  if(nights<=0){pp.classList.remove('show');return;}
+  const total=nights*parseInt(g.value)*{{ villa.price_per_person }};
+  n.textContent=nights;gg.textContent=g.value;tt.textContent=total.toLocaleString('en-IN');
+  pp.classList.add('show');
+}
+[ci,co,g].forEach(e=>e.addEventListener('change',calc));
+</script>
 </body>
 </html>
