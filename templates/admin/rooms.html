@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+<meta charset="UTF-8">
+<title>Manage Rooms</title>
+<style>
+body{font-family:'Segoe UI',sans-serif;background:#f4f7f6;padding:20px}
+.header{display:flex;justify-content:space-between;background:#006400;color:white;padding:15px 25px;border-radius:8px;margin-bottom:20px}
+.btn-logout{background:#cc0000;color:white;padding:8px 15px;text-decoration:none;border-radius:5px}
+.btn-back{background:#ff9800;color:white;padding:8px 15px;text-decoration:none;border-radius:5px;margin-right:10px}
+.room-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:15px}
+.room{background:white;padding:20px;border-radius:8px;box-shadow:0 2px 5px rgba(0,0,0,.08);text-align:center}
+.room h3{color:#006400;margin-bottom:10px}
+.btn-toggle{padding:8px 15px;border:none;border-radius:5px;cursor:pointer;margin-top:10px}
+.btn-toggle.active{background:#006400;color:white}
+.btn-toggle.inactive{background:#ccc;color:#333}
+</style>
+</head>
+<body>
+<div class="header">
+  <h2>🛏️ Manage Rooms ({{ rooms|length }} Total)</h2>
+  <div>
+    <a href="/admin/dashboard" class="btn-back">← Dashboard</a>
+    <a href="/admin/logout" class="btn-logout">Logout</a>
+  </div>
+</div>
+<div class="room-grid">
+  {% for r in rooms %}
+  <div class="room">
+    <h3>{{ r.name }}</h3>
+    <p>Capacity: {{ r.capacity }} persons</p>
+    <p>Status: <strong>{{ 'Active ✅' if r.is_active else 'Inactive ❌' }}</strong></p>
+    <form method="POST" action="/admin/room/{{ r.id }}/toggle">
+      <button class="btn-toggle {{ 'active' if r.is_active else 'inactive' }}">
+        {{ 'Disable' if r.is_active else 'Enable' }}
+      </button>
+    </form>
+  </div>
+  {% endfor %}
+</div>
+</body>
+</html>
